@@ -1,7 +1,7 @@
 /*
-Adafruit Arduino - Lesson 15. Bi-directional Motor
 Jordan Shaw
 Added Secondary Motor
+Timer to test and control wheel movements with forward, stop, left and right
 */
 
 // Motor One
@@ -17,8 +17,30 @@ int in4Pin = 3;
 int switchPin = 7;
 int potPin = 0;
 
+const int onTime1 = 0; // in ms
+const int offTime1 = 1000; // in ms
+
+const int onTime2 = 1001; // in ms
+const int offTime2 = 2000; // in ms
+
+const int onTime3 = 2001; // in ms
+const int offTime3 = 3000; // in ms
+
+const int onTime4 = 3001; // in ms
+const int offTime4 = 4000; // in ms
+
+const int onTime5 = 4001; // in ms
+const int offTime5 = 5000; // in ms
+
+boolean currentlyOn = false;
+boolean forwardOn = false;
+boolean backwardOn = false;
+boolean leftOn = false;
+boolean rightOn = false;
+
 // will store last time LED was updated
 unsigned long previousMillis = 0;
+unsigned long startTime;
 
 // interval at which to blink (milliseconds)
 const long interval = 1000;
@@ -27,6 +49,8 @@ void setup()
 {
 
   Serial.begin(9600);
+
+  startTime = millis();
   
   //  Motor One
   pinMode(in1Pin, OUTPUT);
@@ -48,34 +72,28 @@ void loop()
 //  setMotor(speed, reverse);
 
   unsigned long currentMillis = millis();
-
-//  if(currentMillis - previousMillis >= interval) {
-//  }
-  drive_forward(speed, reverse);
-  delay(1000);
-  motor_stop(speed, reverse);
-  Serial.println("1");
   
-  drive_backward(speed, reverse);
-  delay(1000);
-  motor_stop(speed, reverse);
-  Serial.println("2");
-  
-  turn_left(speed, reverse);
-  delay(1000);
-  motor_stop(speed, reverse);
-  Serial.println("3");
-  
-  turn_right(speed, reverse);
-  delay(1000);
-  motor_stop(speed, reverse);
-  Serial.println("4"); 
-  
-  motor_stop( speed, reverse);
-  delay(1000);
-  motor_stop(speed, reverse);
-  Serial.println("5");
-  
+  if (currentMillis >= startTime + onTime1 && currentMillis <= startTime + offTime1){ // Switch resistor off
+    drive_forward(speed, reverse);
+    currentlyOn=false;
+    Serial.println("1");
+  } else if(currentMillis >= startTime + onTime2 && currentMillis <= startTime + offTime2) {
+    drive_backward(speed, reverse);  
+    currentlyOn=true;
+    Serial.println("2");
+  } else if (currentMillis >= startTime + onTime3 && currentMillis <= startTime + offTime3) {
+    turn_left(speed, reverse);  
+    Serial.println("3");
+  } else if (currentMillis >= startTime + onTime4 && currentMillis <= startTime + offTime4) {
+    turn_right(speed, reverse);  
+    Serial.println("4");
+  } else if (currentMillis >= startTime + onTime5 && currentMillis <= startTime + offTime5) {
+    motor_stop(speed, reverse);
+    Serial.println("5");
+  } else {
+    // Reset timer
+    startTime=millis();  
+  }
 }
 
 void setMotor(int speed, boolean reverse)
@@ -101,7 +119,6 @@ void motor_stop(int speed, boolean reverse){
   analogWrite(enablePin2, speed);
   digitalWrite(in3Pin, LOW); 
   digitalWrite(in4Pin, LOW);
-  delay(25);
 }
 
 void drive_forward(int speed, boolean reverse){
