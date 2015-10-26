@@ -16,6 +16,18 @@ QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5},
   NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSORS];
 
+#define KP .2
+#define KD 5
+#define M1_DEFAULT_SPEED 50
+#define M2_DEFAULT_SPEED 50
+#define M1_MAX_SPEED 70
+#define M2_MAX_SPEED 70
+#define DEBUG 0 // set to 1 if serial debug output needed
+
+int lastError = 0;
+int last_proportional = 0;
+int integral = 0;
+
 
 // Motor One
 int enablePin = 11;
@@ -55,6 +67,10 @@ boolean rightOn = false;
 unsigned long previousMillis = 0;
 unsigned long startTime;
 
+//  Print the line position every...
+const long lineInterval = 1000;
+unsigned long linePreviousMillis = 0;
+
 void setup()
 {
 
@@ -75,10 +91,6 @@ void setup()
   pinMode(switchPin, INPUT_PULLUP);
 
   // Collaboration of the QTR Sensor
-
-  //  Print the line position every...
-  const long lineInterval = 250;
-  unsigned long linePreviousMillis = 0;
   
   delay(500);
   pinMode(13, OUTPUT);
@@ -117,39 +129,76 @@ void loop()
   //  setMotor(speed, reverse);
 
   unsigned long currentMillis = millis();
-
+  
   // Get averaged line position
   unsigned int position = qtra.readLine(sensorValues);
+  int error = position - 2000;
 
+  int motorSpeed = KP * error + KD * (error - lastError);
+  lastError = error;
+
+  int leftMotorSpeed = M1_DEFAULT_SPEED + motorSpeed;
+  int rightMotorSpeed = M2_DEFAULT_SPEED - motorSpeed;
+
+  // set motor speeds using the two motor speed variables above
+  set_motors(leftMotorSpeed, rightMotorSpeed);
+
+//  if(currentMillis - linePreviousMillis >= lineInterval) {
+//    linePreviousMillis = currentMillis;
+//    // comment this line out if you are using raw values
+//    Serial.print("Line Position: ");
+//    Serial.println(position);
+//  }
+  
+//  if (currentMillis >= startTime + onTime1 && currentMillis <= startTime + offTime1){ // Switch resistor off
+//    drive_forward(speed, reverse);
+//    currentlyOn=false;
+//    Serial.println("1");
+//  } else if(currentMillis >= startTime + onTime2 && currentMillis <= startTime + offTime2) {
+//    drive_backward(speed, reverse);  
+//    currentlyOn=true;
+//    Serial.println("2");
+//  } else if (currentMillis >= startTime + onTime3 && currentMillis <= startTime + offTime3) {
+//    turn_left(speed, reverse);  
+//    Serial.println("3");
+//  } else if (currentMillis >= startTime + onTime4 && currentMillis <= startTime + offTime4) {
+//    turn_right(speed, reverse);  
+//    Serial.println("4");
+//  } else if (currentMillis >= startTime + onTime5 && currentMillis <= startTime + offTime5) {
+//    motor_stop(speed, reverse);
+//    Serial.println("5");
+//  } else {
+//    // Reset timer
+//    startTime=millis();  
+//  }
+}
+
+void set_motors(int motor1speed, int motor2speed)
+{
+
+  unsigned long currentMillis = millis();
+  
   if(currentMillis - linePreviousMillis >= lineInterval) {
     linePreviousMillis = currentMillis;
-    // comment this line out if you are using raw values
-    Serial.print("Line Position: ");
-    Serial.println(position);
+    
+    Serial.print("Motor 1 Speed: ");
+    Serial.print(motor1speed);
+    
+    Serial.print("\t Motor 2 Speed: ");
+    Serial.println(motor2speed);
   }
+
   
-  if (currentMillis >= startTime + onTime1 && currentMillis <= startTime + offTime1){ // Switch resistor off
-    drive_forward(speed, reverse);
-    currentlyOn=false;
-    Serial.println("1");
-  } else if(currentMillis >= startTime + onTime2 && currentMillis <= startTime + offTime2) {
-    drive_backward(speed, reverse);  
-    currentlyOn=true;
-    Serial.println("2");
-  } else if (currentMillis >= startTime + onTime3 && currentMillis <= startTime + offTime3) {
-    turn_left(speed, reverse);  
-    Serial.println("3");
-  } else if (currentMillis >= startTime + onTime4 && currentMillis <= startTime + offTime4) {
-    turn_right(speed, reverse);  
-    Serial.println("4");
-  } else if (currentMillis >= startTime + onTime5 && currentMillis <= startTime + offTime5) {
-    motor_stop(speed, reverse);
-    Serial.println("5");
-  } else {
-    // Reset timer
-    startTime=millis();  
-  }
+  if (motor1speed > M1_MAX_SPEED ) motor1speed = M1_MAX_SPEED; // limit top speed
+  if (motor2speed > M2_MAX_SPEED ) motor2speed = M2_MAX_SPEED; // limit top speed
+  if (motor1speed < 0) motor1speed = 0; // keep motor above 0
+  if (motor2speed < 0) motor2speed = 0; // keep motor speed above 0
+//  motor1.setSpeed(motor1speed);     // set motor speed
+//  motor2.setSpeed(motor2speed);     // set motor speed
+//  motor1.run(FORWARD);  
+//  motor2.run(FORWARD);
 }
+
 
 void setMotor(int speed, boolean reverse)
 {
