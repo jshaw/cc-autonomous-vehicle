@@ -5,6 +5,21 @@
 
 #### Reference 
 
+##### IR Array
+qtr-8: https://www.pololu.com/docs/pdf/0J12/QTR-8x.pdf
+
+http://www.instructables.com/id/Arduino-based-line-follower-using-Pololu-QTR-8RC-l/?ALLSTEPS
+
+https://www.youtube.com/watch?v=JWaDoqFosh8
+
+https://www.pololu.com/docs/0J19/all
+
+https://www.pololu.com/product/960/pictures
+
+https://www.pololu.com/product/961
+
+
+
 ##### Motors
 http://www.instructables.com/id/Arduino-and-L293D-Robot-Part-1-/?ALLSTEPS
 
