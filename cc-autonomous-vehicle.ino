@@ -4,6 +4,19 @@ Added Secondary Motor
 Timer to test and control wheel movements with forward, stop, left and right
 */
 
+//Setting up the QTR Sensor
+#include <QTRSensors.h>
+
+#define NUM_SENSORS             6  // number of sensors used
+#define NUM_SAMPLES_PER_SENSOR  4  // average 4 analog samples per sensor reading
+#define EMITTER_PIN             2  // emitter is controlled by digital pin 2
+
+// sensors 0 through 5 are connected to analog inputs 0 through 5, respectively
+QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
+  NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
+unsigned int sensorValues[NUM_SENSORS];
+
+
 // Motor One
 int enablePin = 11;
 int in1Pin = 10;
@@ -42,9 +55,6 @@ boolean rightOn = false;
 unsigned long previousMillis = 0;
 unsigned long startTime;
 
-// interval at which to blink (milliseconds)
-const long interval = 1000;
-
 void setup()
 {
 
@@ -63,15 +73,60 @@ void setup()
   pinMode(enablePin2, OUTPUT);
   
   pinMode(switchPin, INPUT_PULLUP);
+
+  // Collaboration of the QTR Sensor
+
+  //  Print the line position every...
+  const long lineInterval = 250;
+  unsigned long linePreviousMillis = 0;
+  
+  delay(500);
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);    // turn on Arduino's LED to indicate we are in calibration mode
+  for (int i = 0; i < 400; i++)  // make the calibration take about 10 seconds
+  {
+    qtra.calibrate();       // reads all sensors 10 times at 2.5 ms per six sensors (i.e. ~25 ms per call)
+  }
+  digitalWrite(13, LOW);     // turn off Arduino's LED to indicate we are through with calibration
+
+  // print the calibration minimum values measured when emitters were on
+  Serial.begin(9600);
+  for (int i = 0; i < NUM_SENSORS; i++)
+  {
+    Serial.print(qtra.calibratedMinimumOn[i]);
+    Serial.print(' ');
+  }
+  Serial.println();
+  
+  // print the calibration maximum values measured when emitters were on
+  for (int i = 0; i < NUM_SENSORS; i++)
+  {
+    Serial.print(qtra.calibratedMaximumOn[i]);
+    Serial.print(' ');
+  }
+  Serial.println();
+  Serial.println();
+  delay(1000);
+  
 }
 
 void loop()
 {
   int speed = analogRead(potPin) / 4;
   boolean reverse = digitalRead(switchPin);
-//  setMotor(speed, reverse);
+  //  setMotor(speed, reverse);
 
   unsigned long currentMillis = millis();
+
+  // Get averaged line position
+  unsigned int position = qtra.readLine(sensorValues);
+
+  if(currentMillis - linePreviousMillis >= lineInterval) {
+    linePreviousMillis = currentMillis;
+    // comment this line out if you are using raw values
+    Serial.print("Line Position: ");
+    Serial.println(position);
+  }
   
   if (currentMillis >= startTime + onTime1 && currentMillis <= startTime + offTime1){ // Switch resistor off
     drive_forward(speed, reverse);
