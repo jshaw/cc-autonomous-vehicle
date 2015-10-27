@@ -26,8 +26,6 @@ unsigned int sensorValues[NUM_SENSORS];
 
 //For the start button
 #define START_BUTTON_PIN 8  // emitter is controlled by digital pin 2
-//boolean toStart = false;
-//int onOff = 0;
 int motorState = LOW;
 int motorStateButton;
 int motorPrevious = LOW;
@@ -141,8 +139,7 @@ void loop()
   unsigned long currentMillis = millis();
 
   motorStateButton = digitalRead(START_BUTTON_PIN);
-//  onOff = digitalRead(START_BUTTON_PIN);
-  if(stateButton == LOW && motorPrevious == HIGH && millis() - time > debounce) {
+  if(motorStateButton == LOW && motorPrevious == HIGH && millis() - time > debounce) {
     if(motorState == LOW){
       motorState = HIGH; 
     } else {
@@ -150,27 +147,9 @@ void loop()
     }
     time = millis();
   }
-  motorPrevious = motorStateButton ;
-
-  //  TODO: ADD ON / OFF Button Logic
-//  onOff = digitalRead(START_BUTTON_PIN);
-//
-//  Serial.print("onOff: ");
-//  Serial.println(onOff);
-//
-//  // Added turn on and off button for the car
-//  if(onOff == 0){
-//    // Button is pushed
-//    Serial.print("HIGH: ");
-//    Serial.println(onOff);
-//    toStart = !toStart;
-//  } else {
-//    Serial.print("LOW: ");
-//    Serial.println(onOff);
-//  }
+  motorPrevious = motorStateButton;
 
   // Wait before the start button is pushed to start driving
-//  if (toStart == false){
   if (motorState == LOW){
     Serial.println("DO NOTHING!!!");
     digitalWrite(in1Pin, LOW); 
