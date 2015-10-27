@@ -24,6 +24,16 @@ unsigned int sensorValues[NUM_SENSORS];
 #define M2_MAX_SPEED 70
 #define DEBUG 0 // set to 1 if serial debug output needed
 
+//For the start button
+#define START_BUTTON_PIN 8  // emitter is controlled by digital pin 2
+//boolean toStart = false;
+//int onOff = 0;
+int motorState = LOW;
+int motorStateButton;
+int motorPrevious = LOW;
+long time = 0;
+long debounce = 200;
+
 int lastError = 0;
 int last_proportional = 0;
 int integral = 0;
@@ -90,6 +100,9 @@ void setup()
   
   pinMode(switchPin, INPUT_PULLUP);
 
+  // For start Button
+  pinMode(START_BUTTON_PIN, INPUT);
+
   // Collaboration of the QTR Sensor
   
   delay(500);
@@ -124,11 +137,54 @@ void setup()
 
 void loop()
 {
+
+  unsigned long currentMillis = millis();
+
+  motorStateButton = digitalRead(START_BUTTON_PIN);
+//  onOff = digitalRead(START_BUTTON_PIN);
+  if(stateButton == LOW && motorPrevious == HIGH && millis() - time > debounce) {
+    if(motorState == LOW){
+      motorState = HIGH; 
+    } else {
+       motorState = LOW; 
+    }
+    time = millis();
+  }
+  motorPrevious = motorStateButton ;
+
+  //  TODO: ADD ON / OFF Button Logic
+//  onOff = digitalRead(START_BUTTON_PIN);
+//
+//  Serial.print("onOff: ");
+//  Serial.println(onOff);
+//
+//  // Added turn on and off button for the car
+//  if(onOff == 0){
+//    // Button is pushed
+//    Serial.print("HIGH: ");
+//    Serial.println(onOff);
+//    toStart = !toStart;
+//  } else {
+//    Serial.print("LOW: ");
+//    Serial.println(onOff);
+//  }
+
+  // Wait before the start button is pushed to start driving
+//  if (toStart == false){
+  if (motorState == LOW){
+    Serial.println("DO NOTHING!!!");
+    digitalWrite(in1Pin, LOW); 
+    digitalWrite(in2Pin, LOW); 
+    digitalWrite(in3Pin, LOW); 
+    digitalWrite(in4Pin, LOW); 
+    return;  
+  }
+
+  Serial.println("TO START NOW");
+  
   int speed = analogRead(potPin) / 4;
   boolean reverse = digitalRead(switchPin);
   //  setMotor(speed, reverse);
-
-  unsigned long currentMillis = millis();
   
   // Get averaged line position
   unsigned int position = qtra.readLine(sensorValues);
@@ -186,6 +242,9 @@ void set_motors(int motor1speed, int motor2speed)
     
     Serial.print("\t Motor 2 Speed: ");
     Serial.println(motor2speed);
+
+    digitalWrite(in1Pin, HIGH); 
+    digitalWrite(in2Pin, LOW); 
   }
 
   
