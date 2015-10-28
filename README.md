@@ -21,6 +21,8 @@ https://www.pololu.com/product/961
 
 
 ##### Motors
+https://learn.adafruit.com/adafruit-arduino-lesson-15-dc-motor-reversing?view=all
+
 http://www.instructables.com/id/Arduino-and-L293D-Robot-Part-1-/?ALLSTEPS
 
 http://www.instructables.com/id/Control-your-motors-with-L293D-and-Arduino/?ALLSTEPS
