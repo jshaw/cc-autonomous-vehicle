@@ -7,19 +7,22 @@ Timer to test and control wheel movements with forward, stop, left and right
 //Setting up the QTR Sensor
 #include <QTRSensors.h>
 
-#define NUM_SENSORS             6  // number of sensors used
+//#define NUM_SENSORS             6  // number of sensors used
+#define NUM_SENSORS             5  // number of sensors used
 #define NUM_SAMPLES_PER_SENSOR  4  // average 4 analog samples per sensor reading
 #define EMITTER_PIN             2  // emitter is controlled by digital pin 2
 
 // sensors 0 through 5 are connected to analog inputs 0 through 5, respectively
-QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
+//QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
+//  NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
+QTRSensorsAnalog qtra((unsigned char[]) {1, 2, 3, 4, 5}, 
   NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSORS];
 
 #define KP .2
 #define KD 5
-#define M1_DEFAULT_SPEED 50
-#define M2_DEFAULT_SPEED 50
+#define M1_DEFAULT_SPEED 40
+#define M2_DEFAULT_SPEED 40
 #define M1_MAX_SPEED 70
 #define M2_MAX_SPEED 70
 #define DEBUG 0 // set to 1 if serial debug output needed
@@ -96,7 +99,7 @@ void setup()
   pinMode(in4Pin, OUTPUT);
   pinMode(enablePin2, OUTPUT);
   
-  pinMode(switchPin, INPUT_PULLUP);
+//  pinMode(switchPin, INPUT_PULLUP);
 
   // For start Button
   pinMode(START_BUTTON_PIN, INPUT);
@@ -112,24 +115,26 @@ void setup()
   }
   digitalWrite(13, LOW);     // turn off Arduino's LED to indicate we are through with calibration
 
-  // print the calibration minimum values measured when emitters were on
-  Serial.begin(9600);
-  for (int i = 0; i < NUM_SENSORS; i++)
-  {
-    Serial.print(qtra.calibratedMinimumOn[i]);
-    Serial.print(' ');
-  }
-  Serial.println();
+  if(DEBUG){
   
-  // print the calibration maximum values measured when emitters were on
-  for (int i = 0; i < NUM_SENSORS; i++)
-  {
-    Serial.print(qtra.calibratedMaximumOn[i]);
-    Serial.print(' ');
+    // print the calibration minimum values measured when emitters were on
+    for (int i = 0; i < NUM_SENSORS; i++)
+    {
+      Serial.print(qtra.calibratedMinimumOn[i]);
+      Serial.print(' ');
+    }
+    Serial.println();
+    
+    // print the calibration maximum values measured when emitters were on
+    for (int i = 0; i < NUM_SENSORS; i++)
+    {
+      Serial.print(qtra.calibratedMaximumOn[i]);
+      Serial.print(' ');
+    }
+    Serial.println();
+    Serial.println();
+    delay(1000);
   }
-  Serial.println();
-  Serial.println();
-  delay(1000);
   
 }
 
@@ -159,10 +164,12 @@ void loop()
     return;  
   }
 
-  Serial.println("TO START NOW");
+//  Serial.println("TO START NOW");
   
   int speed = analogRead(potPin) / 4;
-  boolean reverse = digitalRead(switchPin);
+  Serial.print("speed: ");
+  Serial.println(speed);
+//  boolean reverse = digitalRead(switchPin);
   //  setMotor(speed, reverse);
   
   // Get averaged line position
@@ -176,7 +183,7 @@ void loop()
   int rightMotorSpeed = M2_DEFAULT_SPEED - motorSpeed;
 
   // set motor speeds using the two motor speed variables above
-  set_motors(leftMotorSpeed, rightMotorSpeed);
+  set_motors(leftMotorSpeed, rightMotorSpeed, speed);
 
 //  if(currentMillis - linePreviousMillis >= lineInterval) {
 //    linePreviousMillis = currentMillis;
@@ -208,22 +215,23 @@ void loop()
 //  }
 }
 
-void set_motors(int motor1speed, int motor2speed)
+void set_motors(int motor1speed, int motor2speed, int speed)
 {
 
   unsigned long currentMillis = millis();
   
   if(currentMillis - linePreviousMillis >= lineInterval) {
-    linePreviousMillis = currentMillis;
+//    linePreviousMillis = currentMillis;
     
-    Serial.print("Motor 1 Speed: ");
-    Serial.print(motor1speed);
-    
-    Serial.print("\t Motor 2 Speed: ");
-    Serial.println(motor2speed);
+//    Serial.print("Motor 1 Speed: ");
+//    Serial.print(motor1speed);
+//    
+//    Serial.print("\t Motor 2 Speed: ");
+//    Serial.println(motor2speed);
 
-    digitalWrite(in1Pin, HIGH); 
-    digitalWrite(in2Pin, LOW); 
+//    analogWrite(enablePin, speed);
+//    digitalWrite(in1Pin, HIGH); 
+//    digitalWrite(in2Pin, LOW); 
   }
 
   
@@ -235,6 +243,26 @@ void set_motors(int motor1speed, int motor2speed)
 //  motor2.setSpeed(motor2speed);     // set motor speed
 //  motor1.run(FORWARD);  
 //  motor2.run(FORWARD);
+
+  if(currentMillis - linePreviousMillis >= lineInterval) {
+    linePreviousMillis = currentMillis;
+    
+    Serial.print("Motor 1 Speed: ");
+    Serial.print(motor1speed);
+    
+    Serial.print("\t Motor 2 Speed: ");
+    Serial.println(motor2speed);
+
+//    analogWrite(enablePin, speed);
+    analogWrite(enablePin, motor1speed);
+    digitalWrite(in1Pin, HIGH); 
+    digitalWrite(in2Pin, LOW); 
+
+//    analogWrite(enablePin2, speed);
+    analogWrite(enablePin2, motor2speed);
+    digitalWrite(in1Pin, HIGH); 
+    digitalWrite(in2Pin, LOW);
+  }
 }
 
 
