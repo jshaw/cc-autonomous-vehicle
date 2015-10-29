@@ -6,6 +6,7 @@ Timer to test and control wheel movements with forward, stop, left and right
 
 //Setting up the QTR Sensor
 #include <QTRSensors.h>
+#include <Ultrasonic.h>
 
 //#define NUM_SENSORS             6  // number of sensors used
 #define NUM_SENSORS             5  // number of sensors used
@@ -26,6 +27,12 @@ unsigned int sensorValues[NUM_SENSORS];
 #define M1_MAX_SPEED 70
 #define M2_MAX_SPEED 70
 #define DEBUG 0 // set to 1 if serial debug output needed
+
+
+Ultrasonic ultrasonic(7, 4);
+int distance = 0;
+boolean hasStarted = false;
+
 
 //For the start button
 #define START_BUTTON_PIN 8  // emitter is controlled by digital pin 2
@@ -154,9 +161,21 @@ void loop()
   }
   motorPrevious = motorStateButton;
 
+  distance=ultrasonic.Ranging(CM);//get the current result;
+
+  if(distance > 400){
+    distance = 400;
+  }
+  
+  Serial.print("distance: ");
+  Serial.println(distance);
+ 
+  //  Read speed earlier on to help with the rotation to find the opening
+  int speed = analogRead(potPin) / 4;
+
   // Wait before the start button is pushed to start driving
   if (motorState == LOW){
-    Serial.println("DO NOTHING!!!");
+//    Serial.println("DO NOTHING!!!");
     digitalWrite(in1Pin, LOW); 
     digitalWrite(in2Pin, LOW); 
     digitalWrite(in3Pin, LOW); 
@@ -164,12 +183,42 @@ void loop()
     return;  
   }
 
-//  Serial.println("TO START NOW");
+  Serial.print("hasStarted: ");
+  Serial.println(hasStarted);
+
+
+  if(distance <= 20 && hasStarted == 0){
+    // spin in circles to find an exit
+    Serial.println("======================");
+    Serial.print("SPEED IN CASE: ");
+
+    if (speed > M1_MAX_SPEED ) speed = M1_MAX_SPEED; // limit top speed
+    if (speed < 0) speed = 0; // keep motor above 0
+    Serial.println(speed);
+
+    // SPIN IN CIRCLE TO FIND EXIT
+    analogWrite(enablePin, speed);
+    digitalWrite(in1Pin, LOW); 
+    digitalWrite(in2Pin, HIGH); 
   
-  int speed = analogRead(potPin) / 4;
+    analogWrite(enablePin2, speed);
+    digitalWrite(in3Pin, HIGH); 
+    digitalWrite(in4Pin, LOW);
+    return;
+  } else {
+    // Go forward
+    // Don't do anything else!
+    // Set the has started flag to true so we know not to go 
+    //  into a frantic spin cycle when following the line
+    hasStarted = 1;
+    
+  }
+  
+
+  //  Serial.println("TO START NOW");
   Serial.print("speed: ");
   Serial.println(speed);
-//  boolean reverse = digitalRead(switchPin);
+  //  boolean reverse = digitalRead(switchPin);
   //  setMotor(speed, reverse);
   
   // Get averaged line position
@@ -215,8 +264,9 @@ void loop()
 //  }
 }
 
-void set_motors(int motor1speed, int motor2speed, int speed)
-{
+void set_motors(int motor1speed, int motor2speed, int speed) {
+
+  Serial.println("GET HERE ON WHEN NOT SUPPOSE TO?");
 
   unsigned long currentMillis = millis();
   
