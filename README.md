@@ -45,3 +45,11 @@ http://letsmakerobots.com/content/arduino-101-timers-and-interrupts
 https://learn.adafruit.com/multi-tasking-the-arduino-part-2?view=all
 
 http://forum.arduino.cc/index.php?topic=215006.0
+
+##### Maze Solving algorythims
+
+http://www.instructables.com/id/Maze-Solving-Robot/?ALLSTEPS
+
+http://www.instructables.com/id/Robot-Maze-Solver/?ALLSTEPS
+
+http://chipkit.net/arduino-style-maze-solving-robot-sparkfun-ardumoto/
