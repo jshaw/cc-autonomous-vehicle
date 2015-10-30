@@ -16,7 +16,7 @@ Timer to test and control wheel movements with forward, stop, left and right
 // sensors 0 through 5 are connected to analog inputs 0 through 5, respectively
 //QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
 //  NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
-QTRSensorsAnalog qtra((unsigned char[]) {1, 2, 3, 4, 5}, 
+QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
   NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSORS];
 
@@ -24,8 +24,8 @@ unsigned int sensorValues[NUM_SENSORS];
 #define KD 5
 #define M1_DEFAULT_SPEED 40
 #define M2_DEFAULT_SPEED 40
-#define M1_MAX_SPEED 70
-#define M2_MAX_SPEED 70
+#define M1_MAX_SPEED 300
+#define M2_MAX_SPEED 300
 #define DEBUG 0 // set to 1 if serial debug output needed
 
 
@@ -57,7 +57,7 @@ int enablePin2 = 6;
 int in3Pin = 2;
 int in4Pin = 3;
 
-int switchPin = 7;
+//int switchPin = 7;
 int potPin = 0;
 
 const int onTime1 = 0; // in ms
@@ -86,8 +86,9 @@ unsigned long previousMillis = 0;
 unsigned long startTime;
 
 //  Print the line position every...
-const long lineInterval = 1000;
+const long lineInterval = 2000;
 unsigned long linePreviousMillis = 0;
+unsigned long lineAveragePreviousMillis = 0;
 
 void setup()
 {
@@ -145,37 +146,42 @@ void setup()
   
 }
 
-void loop()
-{
+void loop() {
 
   unsigned long currentMillis = millis();
 
   motorStateButton = digitalRead(START_BUTTON_PIN);
-  if(motorStateButton == LOW && motorPrevious == HIGH && millis() - time > debounce) {
+  if(motorStateButton == LOW && motorPrevious == HIGH && currentMillis - time > debounce) {
     if(motorState == LOW){
       motorState = HIGH; 
     } else {
+      Serial.print("DOES THIS END UP DOING SOMETHING ONCE START???");
        motorState = LOW; 
     }
     time = millis();
   }
   motorPrevious = motorStateButton;
 
-  distance=ultrasonic.Ranging(CM);//get the current result;
+  distance = ultrasonic.Ranging(CM);//get the current result;
 
   if(distance > 400){
     distance = 400;
   }
   
-  Serial.print("distance: ");
-  Serial.println(distance);
+//  Serial.print("distance: ");
+//  Serial.println(distance);
  
   //  Read speed earlier on to help with the rotation to find the opening
   int speed = analogRead(potPin) / 4;
+  if (speed < 100){
+    speed = 350; 
+  }
 
   // Wait before the start button is pushed to start driving
   if (motorState == LOW){
-//    Serial.println("DO NOTHING!!!");
+    Serial.println("DO NOTHING!!!");
+    analogWrite(enablePin, 0);
+    analogWrite(enablePin2, 0);
     digitalWrite(in1Pin, LOW); 
     digitalWrite(in2Pin, LOW); 
     digitalWrite(in3Pin, LOW); 
@@ -183,24 +189,28 @@ void loop()
     return;  
   }
 
-  Serial.print("hasStarted: ");
-  Serial.println(hasStarted);
+//  Serial.print("hasStarted: ");
+//  Serial.println(hasStarted);
 
+  // Uncomment for testing without the sonar sensor enabled
+  // distance = 50;
 
   if(distance <= 20 && hasStarted == 0){
     // spin in circles to find an exit
-    Serial.println("======================");
-    Serial.print("SPEED IN CASE: ");
-
+//    Serial.println("======================");
+//    Serial.print("SPEED IN CASE: ");
+    
     if (speed > M1_MAX_SPEED ) speed = M1_MAX_SPEED; // limit top speed
     if (speed < 0) speed = 0; // keep motor above 0
-    Serial.println(speed);
+//    Serial.println(speed);
 
     // SPIN IN CIRCLE TO FIND EXIT
     analogWrite(enablePin, speed);
+    //  digitalWrite(in1Pin, HIGH);
+    //  digitalWrite(in2Pin, LOW);
     digitalWrite(in1Pin, LOW); 
     digitalWrite(in2Pin, HIGH); 
-  
+
     analogWrite(enablePin2, speed);
     digitalWrite(in3Pin, HIGH); 
     digitalWrite(in4Pin, LOW);
@@ -209,15 +219,14 @@ void loop()
     // Go forward
     // Don't do anything else!
     // Set the has started flag to true so we know not to go 
-    //  into a frantic spin cycle when following the line
+    // into a frantic spin cycle when following the line
     hasStarted = 1;
-    
   }
-  
 
-  //  Serial.println("TO START NOW");
-  Serial.print("speed: ");
-  Serial.println(speed);
+//  LOG SPEED
+//  Serial.print("speed: ");
+//  Serial.println(speed);
+  
   //  boolean reverse = digitalRead(switchPin);
   //  setMotor(speed, reverse);
   
@@ -231,15 +240,21 @@ void loop()
   int leftMotorSpeed = M1_DEFAULT_SPEED + motorSpeed;
   int rightMotorSpeed = M2_DEFAULT_SPEED - motorSpeed;
 
-  // set motor speeds using the two motor speed variables above
-  set_motors(leftMotorSpeed, rightMotorSpeed, speed);
+  // If there's isnt any lines, go straight
+  if (position >= 4000 || position <= 0) {
+    // set motor speeds using the two motor speed variables above
+    set_motors(300, 300, speed);
+  } else {
+    // set motor speeds using the two motor speed variables above
+    set_motors(leftMotorSpeed, rightMotorSpeed, speed);
+  }
 
-//  if(currentMillis - linePreviousMillis >= lineInterval) {
-//    linePreviousMillis = currentMillis;
-//    // comment this line out if you are using raw values
-//    Serial.print("Line Position: ");
-//    Serial.println(position);
-//  }
+  if(currentMillis - lineAveragePreviousMillis >= lineInterval) {
+    lineAveragePreviousMillis = currentMillis;
+    // comment this line out if you are using raw values
+    Serial.print("Line Position: ");
+    Serial.println(position);
+  }
   
 //  if (currentMillis >= startTime + onTime1 && currentMillis <= startTime + offTime1){ // Switch resistor off
 //    drive_forward(speed, reverse);
@@ -265,65 +280,46 @@ void loop()
 }
 
 void set_motors(int motor1speed, int motor2speed, int speed) {
-
-  Serial.println("GET HERE ON WHEN NOT SUPPOSE TO?");
-
-  unsigned long currentMillis = millis();
   
-  if(currentMillis - linePreviousMillis >= lineInterval) {
-//    linePreviousMillis = currentMillis;
-    
-//    Serial.print("Motor 1 Speed: ");
-//    Serial.print(motor1speed);
-//    
-//    Serial.print("\t Motor 2 Speed: ");
-//    Serial.println(motor2speed);
-
-//    analogWrite(enablePin, speed);
-//    digitalWrite(in1Pin, HIGH); 
-//    digitalWrite(in2Pin, LOW); 
-  }
-
+  unsigned long currentMillisMotor = millis();
   
   if (motor1speed > M1_MAX_SPEED ) motor1speed = M1_MAX_SPEED; // limit top speed
   if (motor2speed > M2_MAX_SPEED ) motor2speed = M2_MAX_SPEED; // limit top speed
   if (motor1speed < 0) motor1speed = 0; // keep motor above 0
   if (motor2speed < 0) motor2speed = 0; // keep motor speed above 0
-//  motor1.setSpeed(motor1speed);     // set motor speed
-//  motor2.setSpeed(motor2speed);     // set motor speed
-//  motor1.run(FORWARD);  
-//  motor2.run(FORWARD);
 
-  if(currentMillis - linePreviousMillis >= lineInterval) {
-    linePreviousMillis = currentMillis;
+  // Print Motor speed debugging every "line Interval" seconds
+  if(currentMillisMotor - linePreviousMillis >= lineInterval) {
+    linePreviousMillis = currentMillisMotor;
     
     Serial.print("Motor 1 Speed: ");
     Serial.print(motor1speed);
     
     Serial.print("\t Motor 2 Speed: ");
     Serial.println(motor2speed);
+  }
 
-//    analogWrite(enablePin, speed);
-    analogWrite(enablePin, motor1speed);
+    //  analogWrite(enablePin, speed);
+    analogWrite(enablePin, motor1speed * 2);
     digitalWrite(in1Pin, HIGH); 
     digitalWrite(in2Pin, LOW); 
 
-//    analogWrite(enablePin2, speed);
-    analogWrite(enablePin2, motor2speed);
-    digitalWrite(in1Pin, HIGH); 
-    digitalWrite(in2Pin, LOW);
-  }
+    //  analogWrite(enablePin2, speed);
+    analogWrite(enablePin2, motor2speed * 2);
+    digitalWrite(in3Pin, HIGH); 
+    digitalWrite(in4Pin, LOW);
 }
 
 
+// Function for testing direction control
 void setMotor(int speed, boolean reverse)
 {
-//  Motor One
+  //  Motor One
   analogWrite(enablePin, speed);
   digitalWrite(in1Pin, ! reverse);
   digitalWrite(in2Pin, reverse);
 
-//  Motor Two
+  //  Motor Two
   analogWrite(enablePin2, speed);
   digitalWrite(in3Pin, ! reverse);
   digitalWrite(in4Pin, reverse);
