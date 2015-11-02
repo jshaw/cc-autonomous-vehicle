@@ -10,8 +10,7 @@ H-bridge for motor control
 #include <QTRSensors.h>
 #include <Ultrasonic.h>
 
-//#define NUM_SENSORS             6  // number of sensors used
-#define NUM_SENSORS             5  // number of sensors used
+#define NUM_SENSORS             6  // number of sensors used
 #define NUM_SAMPLES_PER_SENSOR  4  // average 4 analog samples per sensor reading
 #define EMITTER_PIN             2  // emitter is controlled by digital pin 2
 
@@ -234,12 +233,14 @@ void loop() {
 
   // Check if there's another marker to indicate the car to stop.
   //  Stop Car
-  Serial.print("******* Start time");
-  Serial.println(startForward);
-  Serial.print("******* hasStarted");
-  Serial.println(hasStarted);
-  Serial.print("******* hasFinished");
-  Serial.println(hasFinished);
+  if(DEBUG){
+    Serial.print("******* Start time");
+    Serial.println(startForward);
+    Serial.print("******* hasStarted");
+    Serial.println(hasStarted);
+    Serial.print("******* hasFinished");
+    Serial.println(hasFinished);
+  }
   
   // Once the car moves, to detect that it is at the end of the route,
   // check if the has finished flag is not set, 
@@ -269,7 +270,7 @@ void loop() {
   int rightMotorSpeed = M2_DEFAULT_SPEED - motorSpeed;
 
   // If there's isnt any lines, go straight
-  if (position >= 4000 || position <= 0) {
+  if (position >= 5000 || position <= 0) {
     // set motor speeds using the two motor speed variables above
     set_motors(300, 300, speed);
   } else {
