@@ -1,7 +1,9 @@
 /*
 Jordan Shaw
-Added Secondary Motor
-Timer to test and control wheel movements with forward, stop, left and right
+Autonomous Vehicle 
+Uses IR array for line tracking
+Uses sonar sensor for start and stop indicators
+H-bridge for motor control
 */
 
 //Setting up the QTR Sensor
@@ -28,10 +30,12 @@ unsigned int sensorValues[NUM_SENSORS];
 #define M2_MAX_SPEED 300
 #define DEBUG 0 // set to 1 if serial debug output needed
 
-
+//Trig: 7 
+//Echo: 4
 Ultrasonic ultrasonic(7, 4);
 int distance = 0;
 boolean hasStarted = false;
+boolean hasFinished = false;
 
 
 //For the start button
@@ -84,6 +88,7 @@ boolean rightOn = false;
 // will store last time LED was updated
 unsigned long previousMillis = 0;
 unsigned long startTime;
+unsigned long startForward;
 
 //  Print the line position every...
 const long lineInterval = 2000;
@@ -113,7 +118,6 @@ void setup()
   pinMode(START_BUTTON_PIN, INPUT);
 
   // Collaboration of the QTR Sensor
-  
   delay(500);
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);    // turn on Arduino's LED to indicate we are in calibration mode
@@ -168,13 +172,13 @@ void loop() {
     distance = 400;
   }
   
-//  Serial.print("distance: ");
-//  Serial.println(distance);
+  Serial.print("distance: ");
+  Serial.println(distance);
  
   //  Read speed earlier on to help with the rotation to find the opening
   int speed = analogRead(potPin) / 4;
-  if (speed < 100){
-    speed = 350; 
+  if (speed < 50){
+    speed = 100; 
   }
 
   // Wait before the start button is pushed to start driving
@@ -195,7 +199,9 @@ void loop() {
   // Uncomment for testing without the sonar sensor enabled
   // distance = 50;
 
-  if(distance <= 20 && hasStarted == 0){
+//  if(distance <= 20 && hasStarted == 0){
+  // Spin in circle until find indicator
+  if(distance >= 15 && hasStarted == 0){
     // spin in circles to find an exit
 //    Serial.println("======================");
 //    Serial.print("SPEED IN CASE: ");
@@ -220,9 +226,31 @@ void loop() {
     // Don't do anything else!
     // Set the has started flag to true so we know not to go 
     // into a frantic spin cycle when following the line
+    if(hasStarted == 0){
+      startForward = millis();
+    }
     hasStarted = 1;
   }
 
+  // Check if there's another marker to indicate the car to stop.
+  //  Stop Car
+  Serial.print("******* Start time");
+  Serial.println(startForward);
+  Serial.print("******* hasStarted");
+  Serial.println(hasStarted);
+  Serial.print("******* hasFinished");
+  Serial.println(hasFinished);
+  
+  // Once the car moves, to detect that it is at the end of the route,
+  // check if the has finished flag is not set, 
+  // check if the distance is between 10 and 15cm and
+  // that the elapsed time from starting driving is more than 4 seconds
+  if ((distance > 9 && distance <= 15 ) && hasFinished == 0 && (currentMillis > startForward + 4000)){
+    motorState = LOW;
+    hasFinished = 1;
+    return;
+  }
+  
 //  LOG SPEED
 //  Serial.print("speed: ");
 //  Serial.println(speed);
