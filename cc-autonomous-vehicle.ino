@@ -61,13 +61,7 @@ H-bridge for motor control
 //Setting up the QTR Sensor
 #include <QTRSensors.h>
 #include <Ultrasonic.h>
-
-#define NUM_SENSORS             6  // number of sensors used
-#define NUM_SAMPLES_PER_SENSOR  4  // average 4 analog samples per sensor reading
-#define EMITTER_PIN             2  // emitter is controlled by digital pin 2
-
-//For the start button
-#define START_BUTTON_PIN 8
+#include <defaults.h>
 
 // sensors 0 through 5 are connected to analog inputs 0 through 5, respectively
 //QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
@@ -75,14 +69,6 @@ H-bridge for motor control
 QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
   NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
 unsigned int sensorValues[NUM_SENSORS];
-
-#define KP .2
-#define KD 5
-#define M1_DEFAULT_SPEED 80
-#define M2_DEFAULT_SPEED 80
-#define M1_MAX_SPEED 120
-#define M2_MAX_SPEED 120
-#define DEBUG 0 // set to 1 if serial debug output needed
 
 //Trig: 7 
 //Echo: 4
