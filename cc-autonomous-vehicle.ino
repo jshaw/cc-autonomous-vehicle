@@ -66,6 +66,9 @@ H-bridge for motor control
 #define NUM_SAMPLES_PER_SENSOR  4  // average 4 analog samples per sensor reading
 #define EMITTER_PIN             2  // emitter is controlled by digital pin 2
 
+//For the start button
+#define START_BUTTON_PIN 8
+
 // sensors 0 through 5 are connected to analog inputs 0 through 5, respectively
 //QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
 //  NUM_SENSORS, NUM_SAMPLES_PER_SENSOR, EMITTER_PIN);
@@ -75,10 +78,10 @@ unsigned int sensorValues[NUM_SENSORS];
 
 #define KP .2
 #define KD 5
-#define M1_DEFAULT_SPEED 40
-#define M2_DEFAULT_SPEED 40
-#define M1_MAX_SPEED 300
-#define M2_MAX_SPEED 300
+#define M1_DEFAULT_SPEED 80
+#define M2_DEFAULT_SPEED 80
+#define M1_MAX_SPEED 120
+#define M2_MAX_SPEED 120
 #define DEBUG 0 // set to 1 if serial debug output needed
 
 //Trig: 7 
@@ -88,9 +91,7 @@ int distance = 0;
 boolean hasStarted = false;
 boolean hasFinished = false;
 
-
 //For the start button
-#define START_BUTTON_PIN 8  // emitter is controlled by digital pin 2
 int motorState = LOW;
 int motorStateButton;
 int motorPrevious = LOW;
@@ -100,7 +101,6 @@ long debounce = 200;
 int lastError = 0;
 int last_proportional = 0;
 int integral = 0;
-
 
 // Motor One
 int enablePin = 11;
@@ -127,7 +127,7 @@ unsigned long startTime;
 unsigned long startForward;
 
 //  Print the line position every...
-const long lineInterval = 2000;
+const long lineInterval = 500;
 unsigned long linePreviousMillis = 0;
 unsigned long lineAveragePreviousMillis = 0;
 
@@ -163,7 +163,7 @@ void setup()
   }
   digitalWrite(13, LOW);     // turn off Arduino's LED to indicate we are through with calibration
 
-  if(DEBUG){
+//  if(DEBUG){
   
     // print the calibration minimum values measured when emitters were on
     for (int i = 0; i < NUM_SENSORS; i++)
@@ -182,7 +182,7 @@ void setup()
     Serial.println();
     Serial.println();
     delay(1000);
-  }
+//  }
   
 }
 
@@ -196,7 +196,7 @@ void loop() {
       motorState = HIGH; 
     } else {
       Serial.print("DOES THIS END UP DOING SOMETHING ONCE START???");
-       motorState = LOW; 
+       motorState = LOW;
     }
     time = millis();
   }
@@ -207,14 +207,16 @@ void loop() {
   if(distance > 400){
     distance = 400;
   }
-  
-  Serial.print("distance: ");
-  Serial.println(distance);
+
+  if(DEBUG){
+    Serial.print("distance: ");
+    Serial.println(distance);
+  }
  
   //  Read speed earlier on to help with the rotation to find the opening
   int speed = analogRead(potPin) / 4;
-  if (speed < 50){
-    speed = 100; 
+  if (speed < M1_DEFAULT_SPEED){
+    speed = M1_DEFAULT_SPEED; 
   }
 
   // Wait before the start button is pushed to start driving
@@ -283,7 +285,7 @@ void loop() {
   // check if the has finished flag is not set, 
   // check if the distance is between 10 and 15cm and
   // that the elapsed time from starting driving is more than 4 seconds
-  if ((distance > 9 && distance <= 15 ) && hasFinished == 0 && (currentMillis > startForward + 4000)){
+  if ((distance > 9 && distance <= 20 ) && hasFinished == 0 && (currentMillis > startForward + 1500)){
     motorState = LOW;
     hasFinished = 1;
     return;
@@ -305,10 +307,16 @@ void loop() {
   int leftMotorSpeed = M1_DEFAULT_SPEED + motorSpeed;
   int rightMotorSpeed = M2_DEFAULT_SPEED - motorSpeed;
 
+//  Serial.print("******* leftMotorSpeed");
+//  Serial.println(leftMotorSpeed);
+//
+//  Serial.print("******* rightMotorSpeed");
+//  Serial.println(rightMotorSpeed);
+
   // If there's isnt any lines, go straight
   if (position >= 5000 || position <= 0) {
     // set motor speeds using the two motor speed variables above
-    set_motors(300, 300, speed);
+    set_motors(M1_DEFAULT_SPEED, M2_DEFAULT_SPEED, speed);
   } else {
     // set motor speeds using the two motor speed variables above
     set_motors(leftMotorSpeed, rightMotorSpeed, speed);
@@ -319,6 +327,14 @@ void loop() {
     // comment this line out if you are using raw values
     Serial.print("Line Position: ");
     Serial.println(position);
+
+    for (int i = 0; i < NUM_SENSORS; i++) {
+      // Serial.print(sensorValues[i] * 10 / 1001);
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.print(sensorValues[i]);
+      Serial.println(" ");
+    }
   }
 }
 
@@ -343,12 +359,48 @@ void set_motors(int motor1speed, int motor2speed, int speed) {
   }
 
     //  analogWrite(enablePin, speed);
-    analogWrite(enablePin, motor1speed * 2);
+    analogWrite(enablePin, motor1speed);
     digitalWrite(in1Pin, HIGH); 
     digitalWrite(in2Pin, LOW); 
 
     //  analogWrite(enablePin2, speed);
-    analogWrite(enablePin2, motor2speed * 2);
+    analogWrite(enablePin2, motor2speed);
     digitalWrite(in3Pin, HIGH); 
     digitalWrite(in4Pin, LOW);
 }
+
+//float timeThreshold = 100;
+//float lastButtonPress;
+//int buttonCount = 0;
+//int buttonCountThreshold = 5;
+//int isLine = 0;
+//
+//void trackCrossingLine() {
+//  
+//  unsigned long currentMillisLine = millis();
+//
+//  if (sensorValues[0] > 750 && 
+//      sensorValues[1] > 750 && 
+//      sensorValues[2] > 750 && 
+//      sensorValues[3] > 750 && 
+//      sensorValues[4] > 750 && 
+//      sensorValues[5] > 750 ) {
+//    Serial.println("    DETECTED: All Black");
+//    isLine = 1;
+//  }
+//
+//  if(isLine) {
+//        if(currentMillisLine - lastButtonPress < timeThreshold) {
+//             lastButtonPress = currentMillisLine;
+//             buttonCount ++;
+//             if(buttonCount >= buttonCountThreshold) {
+//                 motorState = LOW; 
+//             }
+//        } else {
+//          buttonCount = 0;
+//          isLine = 0;
+//             
+//        }
+//   }
+//}
+
