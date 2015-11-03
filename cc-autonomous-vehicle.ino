@@ -61,7 +61,7 @@ H-bridge for motor control
 //Setting up the QTR Sensor
 #include <QTRSensors.h>
 #include <Ultrasonic.h>
-#include <defaults.h>
+#include "defaults.h"
 
 // sensors 0 through 5 are connected to analog inputs 0 through 5, respectively
 //QTRSensorsAnalog qtra((unsigned char[]) {0, 1, 2, 3, 4, 5}, 
