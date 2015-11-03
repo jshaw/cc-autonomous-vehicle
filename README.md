@@ -18,6 +18,8 @@ https://www.pololu.com/product/960/pictures
 
 https://www.pololu.com/product/961
 
+Good ref for right angles in the lines
+http://potus98.com/2012/11/08/line-following-robot-polar/
 
 
 ##### Motors
@@ -30,6 +32,7 @@ http://www.instructables.com/id/Control-your-motors-with-L293D-and-Arduino/?ALLS
 http://itp.nyu.edu/physcomp/labs/motors-and-transistors/dc-motor-control-using-an-h-bridge/
 
 https://vimeo.com/100357623
+
 
 ##### Timers
 http://stackoverflow.com/questions/26006250/execute-a-function-for-x-seconds-every-y-seconds-on-arduino
