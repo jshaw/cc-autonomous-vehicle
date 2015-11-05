@@ -225,7 +225,7 @@ void loop() {
 
 //  if(distance <= 20 && hasStarted == 0){
   // Spin in circle until find indicator
-  if(distance >= 15 && hasStarted == 0){
+  if(distance >= 20 && hasStarted == 0){
     // spin in circles to find an exit
 //    Serial.println("======================");
 //    Serial.print("SPEED IN CASE: ");
@@ -271,7 +271,7 @@ void loop() {
   // check if the has finished flag is not set, 
   // check if the distance is between 10 and 15cm and
   // that the elapsed time from starting driving is more than 4 seconds
-  if ((distance > 9 && distance <= 20 ) && hasFinished == 0 && (currentMillis > startForward + 1500)){
+  if ((distance > 9 && distance <= 20 ) && hasFinished == 0 && (currentMillis > startForward + 2000)){
     motorState = LOW;
     hasFinished = 1;
     return;
