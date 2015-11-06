@@ -75,6 +75,10 @@ unsigned int sensorValues[NUM_SENSORS];
 Ultrasonic ultrasonic(7, 4);
 int distance = 0;
 boolean hasStarted = false;
+
+boolean turnOne = false;
+boolean turnTwo = false;
+
 boolean hasFinished = false;
 
 //For the start button
@@ -271,10 +275,31 @@ void loop() {
   // check if the has finished flag is not set, 
   // check if the distance is between 10 and 15cm and
   // that the elapsed time from starting driving is more than 4 seconds
+  
   if ((distance > 9 && distance <= 20 ) && hasFinished == 0 && (currentMillis > startForward + 2000)){
-    motorState = LOW;
-    hasFinished = 1;
-    return;
+//    motorState = LOW;
+      hasFinished = 1;
+
+      set_motors(0, M2_DEFAULT_SPEED, speed);
+      return;
+  } else if (distance > 9 && distance <= 20 && hasFinished == 1 && (currentMillis > startForward + 2000)) {
+    set_motors(M1_DEFAULT_SPEED, M2_DEFAULT_SPEED, speed);
+    
+  }
+  
+  
+  
+  
+  
+  
+  if ((distance > 9 && distance <= 20 ) && hasFinished == 0 && (currentMillis > startForward + 2000)){
+//    motorState = LOW;
+      hasFinished = 1;
+
+      set_motors(0, M2_DEFAULT_SPEED, speed);
+      return;
+  } else if (distance <= 20 && hasFinished == 0 && (currentMillis > startForward + 2000)) {
+    set_motors(M1_DEFAULT_SPEED, M2_DEFAULT_SPEED, speed);
   }
   
 //  LOG SPEED
